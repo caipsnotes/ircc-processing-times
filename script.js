@@ -22,17 +22,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // Function to handle dynamic rendering of data
         function renderData(category, data) {
+            // If the data is a string or primitive value, just return it directly
+            if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
+                return data || "Not available";
+            }
+
+            // If the data is an object, recursively process its keys
             if (typeof data === "object" && !Array.isArray(data)) {
-                // If the data is an object, recursively display its properties
                 let rowData = '';
                 Object.entries(data).forEach(([key, value]) => {
                     rowData += `<div><strong>${key}:</strong> ${renderData(key, value)}</div>`;
                 });
                 return rowData;
-            } else {
-                // If it's a primitive value (string, number), display it directly
-                return data || "Not available";
             }
+
+            // If the data is an array, handle it as a list
+            if (Array.isArray(data)) {
+                return `<ul>${data.map(item => `<li>${renderData(category, item)}</li>`).join('')}</ul>`;
+            }
+
+            // If none of the above, fallback to showing "Not available"
+            return "Not available";
         }
 
         // Load processing time on country selection
