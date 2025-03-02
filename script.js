@@ -20,6 +20,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             countrySelect.appendChild(option);
         });
 
+        // Function to handle dynamic rendering of data
+        function renderData(category, data) {
+            if (typeof data === "object" && !Array.isArray(data)) {
+                // If the data is an object, recursively display its properties
+                let rowData = '';
+                Object.entries(data).forEach(([key, value]) => {
+                    rowData += `<div><strong>${key}:</strong> ${renderData(key, value)}</div>`;
+                });
+                return rowData;
+            } else {
+                // If it's a primitive value (string, number), display it directly
+                return data || "Not available";
+            }
+        }
+
         // Load processing time on country selection
         countrySelect.addEventListener("change", function () {
             const selectedCountry = this.value;
@@ -32,8 +47,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (countries[selectedCountry]) {
                     hasData = true;
                     let row = document.createElement("tr");
-                    row.innerHTML = `<td>${category.replace(/-/g, " ")}</td>
-                                     <td>${countries[selectedCountry]}</td>`;
+
+                    // Render data dynamically based on its structure
+                    const rowData = renderData(category, countries[selectedCountry]);
+                    row.innerHTML = `<td>${category.replace(/-/g, " ")}</td><td>${rowData}</td>`;
                     tableBody.appendChild(row);
                 }
             });
