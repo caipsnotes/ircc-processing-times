@@ -10,24 +10,36 @@ document.addEventListener("DOMContentLoaded", async function () {
         const countriesData = await countriesRes.json();
         const timesData = await timesRes.json();
 
-        // Populate dropdown
-        Object.keys(countriesData).forEach((code) => {
+        const countryList = countriesData["country-name"]; // Extract country-name object
+
+        // Populate dropdown with country names
+        Object.entries(countryList).forEach(([code, name]) => {
             let option = document.createElement("option");
             option.value = code;
-            option.textContent = countriesData[code]; // Extract country name
+            option.textContent = name;
             countrySelect.appendChild(option);
         });
 
-        // Load data on country selection
+        // Load processing time on country selection
         countrySelect.addEventListener("change", function () {
             const selectedCountry = this.value;
-            tableBody.innerHTML = ""; // Clear table
-            if (timesData[selectedCountry]) {
-                timesData[selectedCountry].forEach((item) => {
+            tableBody.innerHTML = ""; // Clear previous table data
+
+            let hasData = false;
+
+            // Iterate through all categories in timesData
+            Object.entries(timesData).forEach(([category, countries]) => {
+                if (countries[selectedCountry]) {
+                    hasData = true;
                     let row = document.createElement("tr");
-                    row.innerHTML = `<td>${item.category}</td><td>${item.time}</td>`;
+                    row.innerHTML = `<td>${category.replace(/-/g, " ")}</td>
+                                     <td>${countries[selectedCountry]}</td>`;
                     tableBody.appendChild(row);
-                });
+                }
+            });
+
+            if (!hasData) {
+                tableBody.innerHTML = `<tr><td colspan="2">No processing time available</td></tr>`;
             }
         });
 
