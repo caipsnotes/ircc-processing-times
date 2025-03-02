@@ -11,10 +11,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         const timesData = await timesRes.json();
 
         // Populate dropdown
-        Object.entries(countriesData).forEach(([code, name]) => {
+        Object.keys(countriesData).forEach((code) => {
             let option = document.createElement("option");
             option.value = code;
-            option.textContent = name;
+            option.textContent = countriesData[code]; // Extract country name
             countrySelect.appendChild(option);
         });
 
