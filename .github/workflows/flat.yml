@@ -1,0 +1,37 @@
+name: data
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch: {}
+  push:
+    paths:
+      - .github/workflows/flat.yml
+      - ./data-ptime-en.js
+      - ./data-ptime-non-country-en.js
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup deno
+        uses: denoland/setup-deno@main
+        with:
+          deno-version: v1.10.x
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Fetch country names
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-country-name-en.json
+          downloaded_filename: data-country-name-en.json
+      - name: Fetch processing times
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-en.json
+          downloaded_filename: data-ptime-en.json
+          postprocess: ./data-ptime-en.js
+      - name: Fetch data for in Canada services
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-non-country-en.json
+          downloaded_filename: data-ptime-non-country-en.json
+          postprocess: ./data-ptime-non-country-en.js

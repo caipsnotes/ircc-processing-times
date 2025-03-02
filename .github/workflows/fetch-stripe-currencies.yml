@@ -1,0 +1,53 @@
+name: fetch-stripe-currencies
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Mondays
+  workflow_dispatch: {}
+jobs:
+  fetch-currencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Fetch Stripe Currencies
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+        run: |
+          # Fetch the list of country specs from Stripe API
+          response=$(curl -s -w "%{http_code}" "https://api.stripe.com/v1/country_specs?limit=100" \
+            -u "${{ secrets.STRIPE_API_KEY }}:" \
+            -H "Content-Type: application/x-www-form-urlencoded")
+          
+          # Extract the HTTP status code
+          http_status="${response: -3}"
+          body="${response:0:-3}"
+          
+          # Check if the request was successful (HTTP status code 200)
+          if [ "$http_status" -eq 200 ]; then
+            # Write the response to a file
+            echo "$body" > stripe-country-specs.json
+            
+            # Create the folder if it doesn't exist
+            mkdir -p exchange_rates
+            
+            # Extract supported currencies and save to exchange_rates folder
+            jq '.data[].supported_payment_currencies[]' stripe-country-specs.json | jq -s '.' > exchange_rates/stripe-currencies-temp.json
+            
+            # Remove duplicates and save final file
+            jq 'unique' exchange_rates/stripe-currencies-temp.json > exchange_rates/stripe-currencies.json
+            
+            # Clean up temp file
+            rm exchange_rates/stripe-currencies-temp.json
+          else
+            echo "Error fetching country specs. HTTP status: $http_status"
+            exit 1
+          fi
+      
+      - name: Commit changes
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git add exchange_rates/stripe-currencies.json
+          git commit -m "Update Stripe currencies" || echo "No changes to commit"
+          git pull --rebase origin main  # Rebase to avoid conflicts
+          git push

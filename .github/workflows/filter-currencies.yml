@@ -1,0 +1,59 @@
+name: Filter Currency Rates
+on:
+  # Run whenever source files change
+  push:
+    paths:
+      - 'exchange_rates/currency_rates.json'
+      #- 'exchange_rates/stripe-currencies.json'
+  # Allow manual triggering
+  workflow_dispatch: {}
+  # Run on a schedule if needed
+  #schedule:
+   # - cron: '0 0 * * *'  # Daily at midnight
+
+jobs:
+  filter-currencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Create Python script
+        run: |
+          cat > filter_script.py << 'EOL'
+          import json
+          import os
+          
+          # Load the JSON files
+          with open('exchange_rates/currency_rates.json', 'r') as f:
+              currency_rates = json.load(f)
+          
+          with open('exchange_rates/stripe-currencies.json', 'r') as f:
+              stripe_currencies = json.load(f)
+          
+          # Convert stripe currencies to uppercase for comparison
+          stripe_currencies_upper = [curr.upper() for curr in stripe_currencies]
+          
+          # Filter currency_rates to only include currencies that exist in stripe_currencies
+          filtered_rates = {}
+          for currency, rate in currency_rates.items():
+              # Only include if the currency is in stripe_currencies
+              if currency in stripe_currencies_upper:
+                  filtered_rates[currency] = rate
+          
+          # Write the filtered results
+          os.makedirs('exchange_rates', exist_ok=True)
+          with open('exchange_rates/filtered_currency_rates.json', 'w') as f:
+              json.dump(filtered_rates, f, indent=2)
+          EOL
+      
+      - name: Run filter script
+        run: python3 filter_script.py
+      
+      - name: Commit changes
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git add exchange_rates/filtered_currency_rates.json
+          git commit -m 'Update filtered currency rates' || echo 'No changes to commit'
+          git push
