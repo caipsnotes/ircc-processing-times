@@ -3,27 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRCC Processing Times</title>
-    <script defer src="script.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-    </style>
+    <title>Processing Time Checker</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Optional CSS -->
 </head>
 <body>
-    <h2>IRCC Processing Times</h2>
-    <label for="country">Select Country:</label>
-    <select id="country"></select>
-    <table id="data-table">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Processing Time</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+
+    <h1>Processing Time Checker</h1>
+    
+    <select id="processingTimeSelect">
+        <option value="">Select Category...</option>
+    </select>
+    
+    <div id="processingTimeResult" class="d-none">
+        <p id="processingDescription"></p>
+        <p><strong id="processingDays"></strong> <span id="processingUnit"></span></p>
+    </div>
+
+    <script src="script.js"></script> <!-- Link your JavaScript file -->
 </body>
 </html>
