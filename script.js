@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", async function () {
     const countrySelect = document.getElementById("country");
     const tableBody = document.querySelector("#data-table tbody");
+    const lastUpdatedDiv = document.getElementById("last-updated");  // Div to display last updated time
 
     const countryUrl = "https://raw.githubusercontent.com/caipsnotes/ircc-processing-times/main/data/data-country-name-en.json";
     const timeUrl = "https://raw.githubusercontent.com/caipsnotes/ircc-processing-times/main/data/data-ptime-en.json";
@@ -43,6 +44,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             // If none of the above, fallback to showing "Not available"
             return "Not available";
+        }
+
+        // Extract last updated date
+        function extractLastUpdated(data) {
+            if (data.hasOwnProperty('lastupdated')) {
+                return data.lastupdated;
+            }
+            // If no lastupdated property exists, return null
+            return null;
+        }
+
+        let lastUpdated = null;
+
+        // Iterate through all categories and look for lastupdated property
+        Object.values(timesData).forEach(category => {
+            const updated = extractLastUpdated(category);
+            if (updated) {
+                lastUpdated = updated; // Grab the latest "lastupdated"
+            }
+        });
+
+        // Display last updated info if available
+        if (lastUpdated && lastUpdatedDiv) {
+            lastUpdatedDiv.innerHTML = `Data last updated: ${lastUpdated}`;
         }
 
         // Load processing time on country selection
