@@ -1,36 +1,57 @@
-name: Update IRCC Processing Times Weekly
+name: Weekly IRCC Snapshot
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Runs every Monday UTC
+    - cron: '0 0 * * 1'  # Every Monday UTC
+  workflow_dispatch: {}   # Allow manual run
 
 jobs:
-  update-weekly-data:
+  weekly_snapshot:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out repo
+        uses: actions/checkout@v3
 
-      - name: Create/update weekly data
+      - name: Create data directory
+        run: mkdir -p data
+
+      # Fetch the same IRCC JSON files you already use
+      - name: Fetch country names
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-country-name-en.json
+          downloaded_filename: data/data-country-name-en.json
+
+      - name: Fetch processing times
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-en.json
+          downloaded_filename: data/data-ptime-en.json
+
+      - name: Fetch in-Canada services
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-non-country-en.json
+          downloaded_filename: data/data-ptime-non-country-en.json
+
+      # Save a weekly snapshot for rolling 52 weeks
+      - name: Save weekly snapshot
         run: |
-          mkdir -p data
           YEAR=$(date +'%Y')
-          WEEK=$(date +'%V')  # ISO week number
-          FILE="data/$YEAR-W$WEEK.json"
-
-          TODAY=$(date +'%Y-%m-%d')
-          # Replace the below with your actual data fetch
-          NEW_DATA='[{"date":"'"$TODAY"'","type":"Visitor Visa","time":12},{"date":"'"$TODAY"'","type":"Work Permit","time":19}]'
-
-          echo "$NEW_DATA" > "$FILE"
+          WEEK=$(date +'%V')
+          SNAPSHOT_DIR="weekly"
+          mkdir -p $SNAPSHOT_DIR
+          
+          cp data/data-ptime-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK.json"
 
           # Keep only last 52 weeks
-          ls -1 data/*.json | sort | head -n -52 | xargs -r rm -f
+          ls -1 $SNAPSHOT_DIR/*.json | sort | head -n -52 | xargs -r rm -f
 
+      # Commit and push
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/
-          git commit -m "Weekly update for $(date +'%Y-%m-%d')" || echo "No changes"
+          git add weekly/
+          git commit -m "Weekly snapshot for $(date +'%Y-%m-%d')" || echo "No changes"
           git push
