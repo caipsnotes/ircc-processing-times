@@ -4,26 +4,329 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRCC Processing Times</title>
-    <script defer src="script.js"></script>
+    
+    <!-- Chart.js for historical visualizations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Your modular JavaScript files -->
+    <script defer src="dataService.js"></script>
+    <script defer src="chartService.js"></script>
+    <script defer src="main.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .controls label {
+            font-weight: bold;
+        }
+        
+        .controls select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .controls button {
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .controls button:hover {
+            background-color: #2563eb;
+        }
+        
+        .controls button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        /* Tab System */
+        .tabs {
+            margin-bottom: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #f3f4f6;
+            color: #374151;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .tab-button:hover:not(.active) {
+            background-color: #e5e7eb;
+        }
+        
+        .tab-content {
+            border: 1px solid #d1d5db;
+            border-radius: 0 6px 6px 6px;
+            padding: 20px;
+            background-color: white;
+        }
+        
+        .tab-content.hidden {
+            display: none;
+        }
+        
+        /* Table Styles */
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        th, td { 
+            border: 1px solid #e5e7eb; 
+            padding: 12px; 
+            text-align: left; 
+        }
+        
+        th { 
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        
+        tbody tr:hover {
+            background-color: #f3f4f6;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* Status Messages */
+        .status-message {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .loading {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        .error {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Info Cards */
+        .info-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card h3 {
+            margin: 0 0 8px 0;
+            color: #1e293b;
+            font-size: 16px;
+        }
+        
+        .info-card p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                margin: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .controls select {
+                width: 100%;
+                max-width: none;
+            }
+            
+            .tab-buttons {
+                flex-wrap: wrap;
+            }
+            
+            .chart-container {
+                height: 300px;
+                padding: 10px;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h2>IRCC Processing Times</h2>
-    <label for="country">Select Country:</label>
-    <select id="country"></select>
-    <table id="data-table">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Processing Time</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="header">
+        <h1>IRCC Processing Times</h1>
+        <div id="last-updated"></div>
+    </div>
+    
+    <!-- Loading and Error Messages -->
+    <div id="loading" class="status-message loading hidden">Loading...</div>
+    <div id="error" class="status-message error hidden"></div>
+    
+    <!-- Controls -->
+    <div class="controls">
+        <label for="country">Select Country:</label>
+        <select id="country">
+            <option value="">Loading countries...</option>
+        </select>
+        <button id="refresh-btn" type="button">Refresh Data</button>
+    </div>
+    
+    <!-- Tab System -->
+    <div class="tabs">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="current">Current Times</button>
+            <button class="tab-button" data-tab="historical">Historical Trends</button>
+            <button class="tab-button" data-tab="about">About</button>
+        </div>
+        
+        <!-- Current Processing Times Tab -->
+        <div id="current-tab" class="tab-content">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Processing Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="2">Please select a country</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Historical Trends Tab -->
+        <div id="historical-tab" class="tab-content hidden">
+            <div class="info-card">
+                <h3>Historical Processing Times</h3>
+                <p>View how processing times have changed over the past year for your selected country.</p>
+            </div>
+            <div id="chart-container" class="chart-container">
+                <p style="text-align: center; color: #6b7280; margin-top: 180px;">
+                    Select a country to view historical data
+                </p>
+            </div>
+        </div>
+        
+        <!-- About Tab -->
+        <div id="about-tab" class="tab-content hidden">
+            <div class="info-card">
+                <h3>About This Tool</h3>
+                <p>This tool tracks IRCC (Immigration, Refugees and Citizenship Canada) processing times using official government data.</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Data Sources</h3>
+                <p>Data is automatically collected from official Canada.ca JSON endpoints:</p>
+                <ul style="margin: 8px 0 0 20px; color: #64748b;">
+                    <li>Country names and codes</li>
+                    <li>Current processing times</li>
+                    <li>In-Canada services data</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h3>Updates</h3>
+                <p>Current data is updated daily, and weekly snapshots are maintained for historical analysis.</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>GitHub Repository</h3>
+                <p>This is an open-source project. View the code and data collection workflows on <a href="https://github.com/caipsnotes/ircc-processing-times" target="_blank" style="color: #3b82f6;">GitHub</a>.</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
