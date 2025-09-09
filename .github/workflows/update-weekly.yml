@@ -47,6 +47,17 @@ jobs:
           # Keep only last 52 weeks
           ls -1 $SNAPSHOT_DIR/*.json | sort | head -n -52 | xargs -r rm -f
 
+        - name: Create weekly index file
+          run: |
+            SNAPSHOT_DIR="weekly"
+            if [ -d "$SNAPSHOT_DIR" ] && [ "$(ls -A $SNAPSHOT_DIR/*.json 2>/dev/null)" ]; then
+              ls -1 $SNAPSHOT_DIR/*.json | sed 's|.*/||' | sort | jq -R -s -c 'split("\n")[:-1]' > $SNAPSHOT_DIR/index.json
+              git add $SNAPSHOT_DIR/index.json
+              echo "Created index with $(cat $SNAPSHOT_DIR/index.json | jq length) files"
+            else
+              echo "No weekly snapshots found, skipping index creation"
+            fi
+
       # Commit and push
       - name: Commit and push
         run: |
