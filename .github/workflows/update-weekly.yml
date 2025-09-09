@@ -1,0 +1,36 @@
+name: Update IRCC Processing Times Weekly
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Runs every Monday UTC
+
+jobs:
+  update-weekly-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create/update weekly data
+        run: |
+          mkdir -p data
+          YEAR=$(date +'%Y')
+          WEEK=$(date +'%V')  # ISO week number
+          FILE="data/$YEAR-W$WEEK.json"
+
+          TODAY=$(date +'%Y-%m-%d')
+          # Replace the below with your actual data fetch
+          NEW_DATA='[{"date":"'"$TODAY"'","type":"Visitor Visa","time":12},{"date":"'"$TODAY"'","type":"Work Permit","time":19}]'
+
+          echo "$NEW_DATA" > "$FILE"
+
+          # Keep only last 52 weeks
+          ls -1 data/*.json | sort | head -n -52 | xargs -r rm -f
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "Weekly update for $(date +'%Y-%m-%d')" || echo "No changes"
+          git push
