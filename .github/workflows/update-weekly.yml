@@ -33,7 +33,7 @@ jobs:
           http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-non-country-en.json
           downloaded_filename: data/data-ptime-non-country-en.json
 
-      # Save a weekly snapshot for rolling 52 weeks
+      # Save a weekly snapshot
       - name: Save weekly snapshot
         run: |
           YEAR=$(date +'%Y')
@@ -42,10 +42,15 @@ jobs:
           mkdir -p $SNAPSHOT_DIR
           
           cp data/data-ptime-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK.json"
-          # Keep only last 52 weeks
-          ls -1 $SNAPSHOT_DIR/*.json | grep -v 'index.json' | sort | head -n -52 | xargs -r rm -f
+          
+          # Keep only newest 52 weeks (exclude index.json)
+          ls -1 $SNAPSHOT_DIR/*.json \
+            | grep -v 'index.json' \
+            | sort -r \
+            | tail -n +53 \
+            | xargs -r rm -f
 
-      # Create weekly index file (exclude index.json itself)
+      # Create weekly index file (newest first)
       - name: Create weekly index file
         run: |
           SNAPSHOT_DIR="weekly"
@@ -53,7 +58,7 @@ jobs:
             ls -1 $SNAPSHOT_DIR/*.json \
               | grep -v 'index.json' \
               | sed 's|.*/||' \
-              | sort \
+              | sort -r \
               | jq -R -s -c 'split("\n")[:-1]' > $SNAPSHOT_DIR/index.json
             git add $SNAPSHOT_DIR/index.json
             echo "Created index with $(cat $SNAPSHOT_DIR/index.json | jq length) files"
