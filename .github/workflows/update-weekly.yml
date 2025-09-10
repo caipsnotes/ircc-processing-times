@@ -1,7 +1,7 @@
 name: Weekly IRCC Snapshot
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Every Monday UTC (also fixed the cron)
+    - cron: '0 0 * * 1'  # Every Monday UTC
   workflow_dispatch: {}   # Allow manual run
 jobs:
   weekly_snapshot:
@@ -49,25 +49,17 @@ jobs:
             echo "No weekly snapshots found, skipping index creation"
           fi
       # Commit and push
-            - name: Commit and push
-              run: |
-                git config user.name "github-actions[bot]"
-                git config user.email "github-actions[bot]@users.noreply.github.com"
-                
-                # Ensure we're on the right branch
-                git checkout main || git checkout master
-                
-                # Pull latest changes to avoid conflicts
-                git pull origin $(git branch --show-current) || echo "Pull failed, continuing..."
-                
-                # Add all weekly files
-                git add weekly/ || echo "Nothing new to add"
-                
-                # Check if there are changes and commit
-                if git diff --staged --quiet; then
-                  echo "No changes to commit"
-                else
-                  git commit -m "Weekly snapshot for $(date +'%Y-%m-%d')"
-                  git push origin $(git branch --show-current)
-                  echo "Changes committed and pushed successfully"
-                fi
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are any changes to commit
+          if [ -n "$(git status --porcelain)" ]; then
+            git add weekly/
+            git commit -m "Weekly snapshot for $(date +'%Y-%m-%d')"
+            git push
+            echo "Changes committed and pushed successfully"
+          else
+            echo "No changes to commit"
+          fi
