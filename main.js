@@ -182,13 +182,11 @@ class IRCCApp {
         const countries = this.dataService.getCountries();
         const countryName = countries ? countries[countryCode] : countryCode;
 
-        this.chartService.createHistoricalChart(
+        this.chartService.createSimpleChart(
             'chart-container',
-            'historical-chart',
             historicalData,
             {
-                title: `Processing Times for ${countryName}`,
-                yAxisLabel: 'Processing Time (varies by category)'
+                title: `Processing Times for ${countryName}`
             }
         );
     }
