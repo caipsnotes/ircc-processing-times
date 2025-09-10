@@ -14,27 +14,35 @@ class SimpleChartService {
      * Extract numeric values from processing time data
      */
     extractProcessingTime(data) {
+        console.log('SimpleChart: Extracting from:', data, 'Type:', typeof data);
+        
         if (typeof data === 'string') {
             // Try to extract number from strings like "12 months", "45 days", etc.
             const match = data.match(/(\d+(?:\.\d+)?)/);
-            return match ? parseFloat(match[1]) : null;
+            const result = match ? parseFloat(match[1]) : null;
+            console.log('SimpleChart: String extraction result:', result);
+            return result;
         }
         
         if (typeof data === 'number') {
+            console.log('SimpleChart: Number result:', data);
             return data;
         }
         
         if (typeof data === 'object' && data !== null) {
             // Look for common time-related properties
-            const timeKeys = ['months', 'days', 'weeks', 'time', 'duration'];
+            const timeKeys = ['months', 'days', 'weeks', 'time', 'duration', 'sponsor', 'refugee'];
             for (const key of timeKeys) {
                 if (data[key] !== undefined) {
+                    console.log('SimpleChart: Found key:', key, 'with value:', data[key]);
                     return this.extractProcessingTime(data[key]);
                 }
             }
+            console.log('SimpleChart: No valid keys found in object');
             return null;
         }
         
+        console.log('SimpleChart: No extraction possible, returning null');
         return null;
     }
 
