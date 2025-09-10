@@ -3,30 +3,36 @@ on:
   schedule:
     - cron: '0 12 * * 3'  # Every Wednesday 6:00 AM CST / 7:00 AM CDT
   workflow_dispatch: {}   # Allow manual run
+
 jobs:
   weekly_snapshot:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
+
       - name: Create data directory
         run: mkdir -p data
-      # Fetch the same IRCC JSON files you already use
+
+      # Fetch the IRCC JSON files
       - name: Fetch country names
         uses: githubocto/flat@v3
         with:
           http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-country-name-en.json
           downloaded_filename: data/data-country-name-en.json
+
       - name: Fetch processing times
         uses: githubocto/flat@v3
         with:
           http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-en.json
           downloaded_filename: data/data-ptime-en.json
+
       - name: Fetch in-Canada services
         uses: githubocto/flat@v3
         with:
           http_url: https://www.canada.ca/content/dam/ircc/documents/json/data-ptime-non-country-en.json
           downloaded_filename: data/data-ptime-non-country-en.json
+
       # Save a weekly snapshot for rolling 52 weeks
       - name: Save weekly snapshot
         run: |
@@ -37,18 +43,25 @@ jobs:
           
           cp data/data-ptime-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK.json"
           # Keep only last 52 weeks
-          ls -1 $SNAPSHOT_DIR/*.json | sort | head -n -52 | xargs -r rm -f
+          ls -1 $SNAPSHOT_DIR/*.json | grep -v 'index.json' | sort | head -n -52 | xargs -r rm -f
+
+      # Create weekly index file (exclude index.json itself)
       - name: Create weekly index file
         run: |
           SNAPSHOT_DIR="weekly"
           if [ -d "$SNAPSHOT_DIR" ] && [ "$(ls -A $SNAPSHOT_DIR/*.json 2>/dev/null)" ]; then
-            ls -1 $SNAPSHOT_DIR/*.json | sed 's|.*/||' | sort | jq -R -s -c 'split("\n")[:-1]' > $SNAPSHOT_DIR/index.json
+            ls -1 $SNAPSHOT_DIR/*.json \
+              | grep -v 'index.json' \
+              | sed 's|.*/||' \
+              | sort \
+              | jq -R -s -c 'split("\n")[:-1]' > $SNAPSHOT_DIR/index.json
             git add $SNAPSHOT_DIR/index.json
             echo "Created index with $(cat $SNAPSHOT_DIR/index.json | jq length) files"
           else
             echo "No weekly snapshots found, skipping index creation"
           fi
-      # Commit and push
+
+      # Commit and push changes
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
