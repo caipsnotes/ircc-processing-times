@@ -1,7 +1,7 @@
 name: Weekly IRCC Snapshot
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Every Monday UTC
+    - cron: '0 12 * * 3'  # Every Wednesday 6:00 AM CST / 7:00 AM CDT
   workflow_dispatch: {}   # Allow manual run
 jobs:
   weekly_snapshot:
