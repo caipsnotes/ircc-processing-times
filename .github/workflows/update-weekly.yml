@@ -41,14 +41,18 @@ jobs:
           SNAPSHOT_DIR="weekly"
           mkdir -p $SNAPSHOT_DIR
           
-          cp data/data-ptime-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK.json"
+          # Save all three files with descriptive names
+          cp data/data-country-name-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK-country-names.json"
+          cp data/data-ptime-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK-processing-times.json"
+          cp data/data-ptime-non-country-en.json "$SNAPSHOT_DIR/$YEAR-W$WEEK-in-canada-services.json"
           
-          # Keep only newest 52 weeks (exclude index.json)
-          ls -1 $SNAPSHOT_DIR/*.json \
-            | grep -v 'index.json' \
-            | sort -r \
-            | tail -n +53 \
-            | xargs -r rm -f
+          # Keep only newest 52 weeks for each file type
+          for suffix in "country-names" "processing-times" "in-canada-services"; do
+            ls -1 $SNAPSHOT_DIR/*-$suffix.json 2>/dev/null \
+              | sort -r \
+              | tail -n +53 \
+              | xargs -r rm -f
+          done
 
       # Create weekly index file (newest first)
       - name: Create weekly index file
