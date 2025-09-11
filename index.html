@@ -201,6 +201,47 @@
             font-size: 14px;
         }
         
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .service-card {
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s;
+        }
+        
+        .service-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .service-card h4 {
+            margin: 0 0 12px 0;
+            color: #1e293b;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .service-time {
+            font-size: 18px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin: 8px 0;
+        }
+        
+        .service-description {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
         /* Responsive Design */
         @media (max-width: 768px) {
             body {
@@ -240,6 +281,10 @@
             th, td {
                 padding: 8px;
             }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -267,6 +312,7 @@
         <div class="tab-buttons">
             <button class="tab-button active" data-tab="current">Current Times</button>
             <button class="tab-button" data-tab="historical">Historical Trends</button>
+            <button class="tab-button" data-tab="in-canada">In-Canada Services</button>
             <button class="tab-button" data-tab="about">About</button>
         </div>
         
@@ -300,6 +346,21 @@
             </div>
         </div>
         
+        <!-- In-Canada Services Tab -->
+        <div id="in-canada-tab" class="tab-content hidden">
+            <div class="info-card">
+                <h3>In-Canada Services</h3>
+                <p>Processing times for services available to people already in Canada, including renewals, extensions, and other applications that don't require country-specific processing.</p>
+            </div>
+            
+            <div id="services-loading" class="status-message loading hidden">Loading in-Canada services...</div>
+            <div id="services-error" class="status-message error hidden"></div>
+            
+            <div id="services-grid" class="services-grid">
+                <!-- Services will be loaded here dynamically -->
+            </div>
+        </div>
+        
         <!-- About Tab -->
         <div id="about-tab" class="tab-content hidden">
             <div class="info-card">
@@ -328,5 +389,81 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Add functionality to load and display In-Canada services data
+        async function loadInCanadaServices() {
+            const servicesLoading = document.getElementById('services-loading');
+            const servicesError = document.getElementById('services-error');
+            const servicesGrid = document.getElementById('services-grid');
+            
+            try {
+                servicesLoading.classList.remove('hidden');
+                servicesError.classList.add('hidden');
+                
+                // Try to load from your data files (adjust path as needed)
+                const response = await fetch('data/data-ptime-non-country-en.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                servicesLoading.classList.add('hidden');
+                
+                // Clear existing content
+                servicesGrid.innerHTML = '';
+                
+                // Process and display the services data
+                if (data && Array.isArray(data)) {
+                    data.forEach(service => {
+                        const serviceCard = document.createElement('div');
+                        serviceCard.className = 'service-card';
+                        
+                        serviceCard.innerHTML = `
+                            <h4>${service.name || 'Service Name Not Available'}</h4>
+                            <div class="service-time">${service.processing_time || 'N/A'}</div>
+                            <div class="service-description">${service.description || 'No description available'}</div>
+                        `;
+                        
+                        servicesGrid.appendChild(serviceCard);
+                    });
+                } else {
+                    servicesGrid.innerHTML = '<p style="text-align: center; color: #6b7280;">No in-Canada services data available</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading in-Canada services:', error);
+                servicesLoading.classList.add('hidden');
+                servicesError.textContent = `Error loading in-Canada services: ${error.message}`;
+                servicesError.classList.remove('hidden');
+            }
+        }
+        
+        // Add event listener for the In-Canada Services tab
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all buttons and hide all content
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    
+                    // Add active class to clicked button and show target content
+                    this.classList.add('active');
+                    document.getElementById(targetTab + '-tab').classList.remove('hidden');
+                    
+                    // Load in-Canada services data when that tab is clicked
+                    if (targetTab === 'in-canada') {
+                        loadInCanadaServices();
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
