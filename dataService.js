@@ -174,6 +174,12 @@ class DataService {
         const historicalData = [];
         
         this.weeklyData.forEach(weekData => {
+            // Skip if year or week is null
+            if (!weekData.year || !weekData.week) {
+                console.warn(`Skipping invalid week data:`, weekData.filename);
+                return;
+            }
+            
             if (category) {
                 // Get specific category data
                 if (weekData.data[category] && weekData.data[category][countryCode]) {
