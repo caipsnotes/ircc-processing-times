@@ -11,6 +11,7 @@
     
     <!-- Your modular JavaScript files -->
     <script defer src="dataService.js"></script>
+    <script defer src="servicesService.js"></script>
     <script defer src="chartService.js"></script>
     <script defer src="main.js"></script>
     
@@ -389,81 +390,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        // Add functionality to load and display In-Canada services data
-        async function loadInCanadaServices() {
-            const servicesLoading = document.getElementById('services-loading');
-            const servicesError = document.getElementById('services-error');
-            const servicesGrid = document.getElementById('services-grid');
-            
-            try {
-                servicesLoading.classList.remove('hidden');
-                servicesError.classList.add('hidden');
-                
-                // Try to load from your data files (adjust path as needed)
-                const response = await fetch('data/data-ptime-non-country-en.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                servicesLoading.classList.add('hidden');
-                
-                // Clear existing content
-                servicesGrid.innerHTML = '';
-                
-                // Process and display the services data
-                if (data && Array.isArray(data)) {
-                    data.forEach(service => {
-                        const serviceCard = document.createElement('div');
-                        serviceCard.className = 'service-card';
-                        
-                        serviceCard.innerHTML = `
-                            <h4>${service.name || 'Service Name Not Available'}</h4>
-                            <div class="service-time">${service.processing_time || 'N/A'}</div>
-                            <div class="service-description">${service.description || 'No description available'}</div>
-                        `;
-                        
-                        servicesGrid.appendChild(serviceCard);
-                    });
-                } else {
-                    servicesGrid.innerHTML = '<p style="text-align: center; color: #6b7280;">No in-Canada services data available</p>';
-                }
-                
-            } catch (error) {
-                console.error('Error loading in-Canada services:', error);
-                servicesLoading.classList.add('hidden');
-                servicesError.textContent = `Error loading in-Canada services: ${error.message}`;
-                servicesError.classList.remove('hidden');
-            }
-        }
-        
-        // Add event listener for the In-Canada Services tab
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const targetTab = this.getAttribute('data-tab');
-                    
-                    // Remove active class from all buttons and hide all content
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.add('hidden'));
-                    
-                    // Add active class to clicked button and show target content
-                    this.classList.add('active');
-                    document.getElementById(targetTab + '-tab').classList.remove('hidden');
-                    
-                    // Load in-Canada services data when that tab is clicked
-                    if (targetTab === 'in-canada') {
-                        loadInCanadaServices();
-                    }
-                });
-            });
-        });
-    </script>
 </body>
 </html>
