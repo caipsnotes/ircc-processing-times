@@ -138,7 +138,8 @@ class DataService {
      * Parse week filename to extract year and week number
      */
     parseWeekFilename(filename) {
-        const match = filename.match(/(\d{4})-W(\d{2})\.json/);
+        // Updated regex to handle descriptive filenames
+        const match = filename.match(/(\d{4})-W(\d{2})(?:-.*)?\.json/);
         if (match) {
             return {
                 year: parseInt(match[1]),
